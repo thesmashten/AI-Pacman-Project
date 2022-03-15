@@ -155,17 +155,17 @@ class MinimaxAgent(MultiAgentSearchAgent):
     def isTerminal(self, gameState, agentIndex, numIndex, depth):
         childAgentIndex = 0
         lst = []
-        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)):
+        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)): #if gameState is win/lose or depth has reached max depth, terminate and return score
             lst.append(self.evaluationFunction(gameState))
             return lst
-        elif agentIndex == numIndex:
+        elif agentIndex == numIndex: #check to see if at numIndex. if so, increement depth 
             depth += 1
             childAgentIndex = self.index
             lst.append(gameState)
             lst.append(childAgentIndex)
             lst.append(depth)
             return lst
-        else:
+        else: #if not at numIndex then simply incremenet childAgentIndex and return 
             childAgentIndex = agentIndex + 1
             lst.append(gameState)
             lst.append(childAgentIndex)
@@ -241,17 +241,17 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     def isTerminal(self, gameState, agentIndex, numIndex, depth):
         childAgentIndex = 0
         lst = []
-        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)):
+        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)): #if gameState is win/lose or depth has reached max depth, terminate and return score
             lst.append(self.evaluationFunction(gameState))
             return lst
-        elif agentIndex == numIndex:
+        elif agentIndex == numIndex: #check to see if at numIndex. if so, increement depth 
             depth += 1
             childAgentIndex = self.index
             lst.append(gameState)
             lst.append(childAgentIndex)
             lst.append(depth)
             return lst
-        else:
+        else: #if not at numIndex then simply incremenet childAgentIndex and return 
             childAgentIndex = agentIndex + 1
             lst.append(gameState)
             lst.append(childAgentIndex)
@@ -385,41 +385,35 @@ def betterEvaluationFunction(currentGameState):
     "*** YOUR CODE HERE ***"
 
     # Setup information to be used as arguments in evaluation function
-    pacman_position = currentGameState.getPacmanPosition()
-    ghost_positions = currentGameState.getGhostPositions()
+    pacmanPositions = currentGameState.getPacmanPosition()
+    ghostPositions = currentGameState.getGhostPositions()
 
-    food_list = currentGameState.getFood().asList()
-    food_count = len(food_list)
-    capsule_count = len(currentGameState.getCapsules())
-    closest_food = 1
+    foodList = currentGameState.getFood().asList()
+    foodNum = len(foodList)
+    capsuleNum = len(currentGameState.getCapsules())
+    closeFood = 1
 
-    game_score = currentGameState.getScore()
+    score = currentGameState.getScore()
 
     # Find distances from pacman to all food
-    food_distances = [manhattanDistance(pacman_position, food_position) for food_position in food_list]
+    foodDistances = [manhattanDistance(pacmanPositions, foodPos) for foodPos in foodList]
 
     # Set value for closest food if there is still food left
-    if food_count > 0:
-        closest_food = min(food_distances)
+    if foodNum > 0:
+        closeFood = min(foodDistances)
 
     # Find distances from pacman to ghost(s)
-    for ghost_position in ghost_positions:
-        ghost_distance = manhattanDistance(pacman_position, ghost_position)
+    for pos in ghostPositions:
+        dist = manhattanDistance(pacmanPositions, pos)
 
         # If ghost is too close to pacman, prioritize escaping instead of eating the closest food
         # by resetting the value for closest distance to food
-        if ghost_distance < 2:
-            closest_food = 99999
+        if dist < 2:
+            closeFood = float("inf")
 
-    features = [1.0 / closest_food,
-                game_score,
-                food_count,
-                capsule_count]
+    features = [1.0 / closeFood, score, foodNum, capsuleNum]
 
-    weights = [10,
-               200,
-               -100,
-               -10]
+    weights = [10, 200, -100, -10]
 
     # Linear combination of features
     return sum([feature * weight for feature, weight in zip(features, weights)])
