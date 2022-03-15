@@ -396,7 +396,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
             #if player = MAX we know that the value = -infinity
             if agentIndex == self.index:
-                value = -float("inf")
+                value = -float("inf") #value represents our current score used to identify the best action
                 
             #else if player = MIN we know that the value = 0
             else:
@@ -414,7 +414,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                     value = value + (numAction ** -1 * expectedMax) #if we know that player is not MAX then value is simply calculated using this equation
             return value, bestAction
 
-        bestScore, bestMove = expectimax(gameState, self.index)
+        bestScore, bestMove = expectimax(gameState, self.index) #starts the recursive expectimax algorithm 
         return bestMove
         
         
