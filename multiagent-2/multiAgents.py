@@ -308,6 +308,67 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+    
+    # def getAction(self, gameState):
+    #     bestScoreActionPair = self.expectimax(gameState, self.index)
+    #     bestScore = bestScoreActionPair[0]
+    #     bestMove =  bestScoreActionPair[1]
+    #     return bestMove
+    
+    # def expectimax(gameState, agentIndex, depth=0):
+    #     legalActionList = gameState.getLegalActions(agentIndex)
+    #     numIndex = gameState.getNumAgents() - 1
+    #     bestAction = None
+    #     # If terminal(pos)
+    #     if (gameState.isLose() or gameState.isWin() or depth == self.depth):
+    #         return [self.evaluationFunction(gameState)]
+    #     elif agentIndex == numIndex:
+    #         depth += 1
+    #         childAgentIndex = self.index
+    #     else:
+    #         childAgentIndex = agentIndex + 1
+
+    #     numAction = len(legalActionList)
+    #     #if player(pos) == MAX: value = -infinity
+    #     if agentIndex == self.index:
+    #         value = -float("inf")
+    #     #if player(pos) == CHANCE: value = 0
+    #     else:
+    #         value = 0
+
+    #     for legalAction in legalActionList:
+    #         successorGameState = gameState.getNextState(agentIndex, legalAction)
+    #         expectedMax = self.expectimax(successorGameState, childAgentIndex, depth)[0]
+    #         if agentIndex == self.index:
+    #             if expectedMax > value:
+    #                 #value, best_move = nxt_val, move
+    #                 value = expectedMax
+    #                 bestAction = legalAction
+    #         else:
+    #             #value = value + prob(move) * nxt_val
+    #             value = value + ((1.0/numAction) * expectedMax)
+    #     return value, bestAction
+
+    def isTerminal(self, gameState, agentIndex, numIndex, depth):
+        childAgentIndex = 0
+        lst = []
+        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)):
+            lst.append(self.evaluationFunction(gameState))
+            return lst
+        elif agentIndex == numIndex:
+            depth += 1
+            childAgentIndex = self.index
+            lst.append(gameState)
+            lst.append(childAgentIndex)
+            lst.append(depth)
+            return lst
+        else:
+            childAgentIndex = agentIndex + 1
+            lst.append(gameState)
+            lst.append(childAgentIndex)
+            lst.append(depth)
+            return lst
+        return 
 
     def getAction(self, gameState):
         """
@@ -318,43 +379,42 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
+        
+        
         def expectimax(gameState, agentIndex, depth=0):
-            legalActionList = gameState.getLegalActions(agentIndex)
+            legalActions = gameState.getLegalActions(agentIndex)
             numIndex = gameState.getNumAgents() - 1
             bestAction = None
-            # If terminal(pos)
-            if (gameState.isLose() or gameState.isWin() or depth == self.depth):
-                return [self.evaluationFunction(gameState)]
-            elif agentIndex == numIndex:
-                depth += 1
-                childAgentIndex = self.index
+            
+            retList = self.isTerminal(gameState, agentIndex, numIndex, depth) #check if player is at terminal node as before 
+            if (len(retList) > 1):
+                gameState = retList[0]
+                childAgentIndex = retList[1]
+                depth = retList[2]
             else:
-                childAgentIndex = agentIndex + 1
+                return retList
 
-            numAction = len(legalActionList)
-            #if player(pos) == MAX: value = -infinity
+            #if player = MAX we know that the value = -infinity
             if agentIndex == self.index:
                 value = -float("inf")
-            #if player(pos) == CHANCE: value = 0
+                
+            #else if player = MIN we know that the value = 0
             else:
                 value = 0
 
-            for legalAction in legalActionList:
-                successorGameState = gameState.getNextState(agentIndex, legalAction)
-                expectedMax = expectimax(successorGameState, childAgentIndex, depth)[0]
+            for legalAction in legalActions:
+                nextState = gameState.getNextState(agentIndex, legalAction)
+                expectedMax = expectimax(nextState, childAgentIndex, depth)[0]
                 if agentIndex == self.index:
                     if expectedMax > value:
-                        #value, best_move = nxt_val, move
-                        value = expectedMax
-                        bestAction = legalAction
+                        value = expectedMax  #if expected max is greater than value, value should take precedence
+                        bestAction = legalAction #pick the best action from bestAction 
                 else:
-                    #value = value + prob(move) * nxt_val
-                    value = value + ((1.0/numAction) * expectedMax)
+                    numAction = len(legalActions) #get length of available actions
+                    value = value + (numAction ** -1 * expectedMax) #if we know that player is not MAX then value is simply calculated using this equation
             return value, bestAction
 
-        bestScoreActionPair = expectimax(gameState, self.index)
-        bestScore = bestScoreActionPair[0]
-        bestMove =  bestScoreActionPair[1]
+        bestScore, bestMove = expectimax(gameState, self.index)
         return bestMove
         
         
