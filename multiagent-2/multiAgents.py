@@ -27,8 +27,6 @@ class ReflexAgent(Agent):
     it in any way you see fit, so long as you don't touch our method
     headers.
     """
-
-
     def getAction(self, gameState):
         """
         You do not need to change this method, but you're welcome to.
@@ -177,8 +175,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
     def Mini_Max(self, gameState, agentIndex, depth=0):
         numIndex = gameState.getNumAgents() - 1
             
-        retList = self.isTerminal(gameState, agentIndex, numIndex, depth)
-        if (len(retList) > 1):
+        retList = self.isTerminal(gameState, agentIndex, numIndex, depth) #check if player is at terminal position 
+        if (len(retList) > 1): #check to see if the ret value from isTerminal only contains the evaluation score
             gameState = retList[0]
             childAgentIndex = retList[1]
             depth = retList[2]
@@ -186,38 +184,37 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return retList
             #If Player == MIN
         if agentIndex != 0:
-            return self.min_value(gameState, agentIndex, numIndex, depth, childAgentIndex)
+            return self.min_value(gameState, agentIndex, numIndex, depth, childAgentIndex) #return the minimum value through recursive call to Mini_Max
             #Player is MAX
         else:
-            return self.max_value(gameState, agentIndex, numIndex, depth, childAgentIndex)
+            return self.max_value(gameState, agentIndex, numIndex, depth, childAgentIndex) #return the maximum value through recursive call to Mini_Max
                 
     def min_value(self, gameState, agentIndex, numIndex, depth, childAgentIndex):
-        min = float("inf")
-        bestAction = None
+        min = float("inf") 
+        bestAction = None #placeholder if there is no legalAction 
         
         for legalAction in gameState.getLegalActions(agentIndex):
-            successorGameState = gameState.getNextState(agentIndex, legalAction)
-            newMin = self.Mini_Max(successorGameState, childAgentIndex, depth)[0]
+            nextState = gameState.getNextState(agentIndex, legalAction)
+            newMin = self.Mini_Max(nextState, childAgentIndex, depth)[0]
             if newMin == min:
-                bestAction = legalAction
-            #return minimum of DFMiniMax(c, MAX) over c in ChildList
+                bestAction = legalAction 
             elif newMin < min:
-                min = newMin
+                min = newMin #we need to reassign the new minimum if newMin < min to maintain mini_max algorithm 
                 bestAction = legalAction
         return min, bestAction
     
     def max_value(self, gameState, agentIndex, numIndex, depth, childAgentIndex):
         max = -float("inf")
-        bestAction = None
+        bestAction = None #placeholder if there is no legalAction 
         
         for legalAction in gameState.getLegalActions(agentIndex):
-            successorGameState = gameState.getNextState(agentIndex, legalAction)
-            newMax = self.Mini_Max(successorGameState, childAgentIndex, depth)[0]
+            nextState = gameState.getNextState(agentIndex, legalAction)
+            newMax = self.Mini_Max(nextState, childAgentIndex, depth)[0]
             if newMax == max:
                 bestAction = legalAction
             #return maximum of DFMiniMax(c, MIN) over c in ChildList
             elif newMax > max:
-                max = newMax
+                max = newMax #we need to reassign the new maximum if newMin < min to maintain mini_max algorithm 
                 bestAction = legalAction
         return max, bestAction
         
@@ -237,11 +234,11 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         bestScore, bestMove = self.Alpha_Beta(gameState, 0, 0, -float("inf"), float("inf"))
         return bestMove
 
-    
     def isTerminal(self, gameState, agentIndex, numIndex, depth):
         childAgentIndex = 0
         lst = []
-        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)): #if gameState is win/lose or depth has reached max depth, terminate and return score
+        #if gameState is win/lose or depth has reached max depth, terminate and return score
+        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)): 
             lst.append(self.evaluationFunction(gameState))
             return lst
         elif agentIndex == numIndex: #check to see if at numIndex. if so, increement depth 
@@ -263,73 +260,60 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         numIndex = gameState.getNumAgents() - 1
             
         retList = self.isTerminal(gameState, agentIndex, numIndex, depth)
-        if (len(retList) > 1):
+        if (len(retList) > 1): #check to see if the ret value from isTerminal only contains the evaluation score
             gameState = retList[0]
             childAgentIndex = retList[1]
             depth = retList[2]
         else:
             return retList
             
-        #If Player == MAX
+        #Maxplayer
         if agentIndex == self.index:
-            return self.max_value(gameState, agentIndex, numIndex, depth, childAgentIndex, alpha, beta)
-        #Player is MIN
+            return self.max_value(gameState, agentIndex, depth, childAgentIndex, alpha, beta)
+        #Minplayer
         else:
-            return self.min_value(gameState, agentIndex, numIndex, depth, childAgentIndex, alpha, beta)
-        
-                
-    def min_value(self, gameState, agentIndex, numIndex, depth, childAgentIndex, alpha, beta):
+            return self.min_value(gameState, agentIndex, depth, childAgentIndex, alpha, beta)
+
+    def min_value(self, gameState, agentIndex, depth, childAgentIndex, alpha, betaCur):
+        beta = float("inf")
         bestAction = None        
         for legalAction in gameState.getLegalActions(agentIndex):
-            if beta <= alpha:
-                return beta, bestAction
-            successorGameState = gameState.getNextState(agentIndex, legalAction)
-            newBeta = self.Alpha_Beta(successorGameState, childAgentIndex, depth, alpha, beta)[0]
-            if newBeta < beta:
+            nextState = gameState.getNextState(agentIndex, legalAction)
+            newBeta = self.Alpha_Beta(nextState, childAgentIndex, depth, alpha, betaCur)[0]
+            if newBeta < beta: #pruning condition 
                 bestAction = legalAction
                 beta = newBeta
+            
+            if beta < alpha: 
+                return beta, legalAction
+            
+            betaCur = min(beta, betaCur)
+            
         return beta, bestAction
     
-    
-    def max_value(self, gameState, agentIndex, numIndex, depth, childAgentIndex, alpha, beta):       
+    def max_value(self, gameState, agentIndex, depth, childAgentIndex, alphaCur, beta):    
+        alpha = -float("inf")   
         bestAction = None
         for legalAction in gameState.getLegalActions(agentIndex):
-            if float(beta) <= float(alpha):
-                return alpha, bestAction
-            successorGameState = gameState.getNextState(agentIndex, legalAction)
-            newAlpha = self.Alpha_Beta(successorGameState, childAgentIndex, depth, alpha, beta)[0]
-            if newAlpha > alpha:
+            nextState = gameState.getNextState(agentIndex, legalAction)
+            newAlpha = self.Alpha_Beta(nextState, childAgentIndex, depth, alphaCur, beta)[0]
+            
+            if newAlpha > alpha: #pruning condition 
                 bestAction = legalAction
                 alpha = newAlpha 
+            
+            if beta < alpha:
+                return alpha, legalAction
+            
+            alphaCur = max(alpha, alphaCur)
+
         return alpha, bestAction 
 
-        
+
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
-    
-    def isTerminal(self, gameState, agentIndex, numIndex, depth):
-        childAgentIndex = 0
-        lst = []
-        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)): #if gameState is win/lose or depth has reached max depth, terminate and return score
-            lst.append(self.evaluationFunction(gameState))
-            return lst
-        elif agentIndex == numIndex: #check to see if at numIndex. if so, increement depth 
-            depth += 1
-            childAgentIndex = self.index
-            lst.append(gameState)
-            lst.append(childAgentIndex)
-            lst.append(depth)
-            return lst
-        else: #if not at numIndex then simply incremenet childAgentIndex and return 
-            childAgentIndex = agentIndex + 1
-            lst.append(gameState)
-            lst.append(childAgentIndex)
-            lst.append(depth)
-            return lst
-        return 
-
     def getAction(self, gameState):
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
@@ -375,6 +359,27 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         bestScore, bestMove = expectimax(gameState, self.index) #starts the recursive expectimax algorithm 
         return bestMove
+
+    def isTerminal(self, gameState, agentIndex, numIndex, depth):
+        childAgentIndex = 0
+        lst = []
+        if (gameState.isLose() or gameState.isWin() or (depth == self.depth)): #if gameState is win/lose or depth has reached max depth, terminate and return score
+            lst.append(self.evaluationFunction(gameState))
+            return lst
+        elif agentIndex == numIndex: #check to see if at numIndex. if so, increement depth 
+            depth += 1
+            childAgentIndex = self.index
+            lst.append(gameState)
+            lst.append(childAgentIndex)
+            lst.append(depth)
+            return lst
+        else: #if not at numIndex then simply incremenet childAgentIndex and return 
+            childAgentIndex = agentIndex + 1
+            lst.append(gameState)
+            lst.append(childAgentIndex)
+            lst.append(depth)
+            return lst
+        return 
         
 def betterEvaluationFunction(currentGameState):
     """
@@ -383,91 +388,34 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-
-    # Setup information to be used as arguments in evaluation function
-    pacmanPositions = currentGameState.getPacmanPosition()
-    ghostPositions = currentGameState.getGhostPositions()
-
+    # Useful information extracted from a GameState (pacman.py)
+    curPos = currentGameState.getPacmanPosition()
+    ghostPos = currentGameState.getGhostPositions()
     foodList = currentGameState.getFood().asList()
-    foodNum = len(foodList)
-    capsuleNum = len(currentGameState.getCapsules())
-    closeFood = 1
+    ghostStates = currentGameState.getGhostStates()
+    scaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
 
-    score = currentGameState.getScore()
+    closestFood = 0 #variable for the distance to the closest piece of food
+    
+    # if we have food left in the game, we compute the distance to the
+    # nearest piece of food. Minimum distance is better
+    if len(foodList) > 0:
+        foodDistances = []
+        for food in foodList:
+            distance = manhattanDistance(curPos, food)
+            foodDistances.append(distance)
+        closestFood = min(foodDistances)
 
-    # Find distances from pacman to all food
-    foodDistances = [manhattanDistance(pacmanPositions, foodPos) for foodPos in foodList]
+    closestFood = -closestFood #make closest food negative as smaller is better
 
-    # Set value for closest food if there is still food left
-    if foodNum > 0:
-        closeFood = min(foodDistances)
+    for ghost in ghostPos:
+        #if closest food is in the place of a ghost, and the ghosts are not scared
+        #we do not want to go to that piece of food so we move away
+        if (manhattanDistance(curPos, ghost) < 1) and scaredTimes == 0: 
+            closestFood = -float('inf')
 
-    # Find distances from pacman to ghost(s)
-    for pos in ghostPositions:
-        dist = manhattanDistance(pacmanPositions, pos)
-
-        # If ghost is too close to pacman, prioritize escaping instead of eating the closest food
-        # by resetting the value for closest distance to food
-        if dist < 2:
-            closeFood = float("inf")
-
-    features = [1.0 / closeFood, score, foodNum, capsuleNum]
-
-    weights = [10, 200, -100, -10]
-
-    # Linear combination of features
-    return sum([feature * weight for feature, weight in zip(features, weights)])
-
+    # Add together features multiplied with their respective weights
+    return 20 * closestFood + 100 * currentGameState.getScore() 
 
 # Abbreviation
 better = betterEvaluationFunction
-
-# def betterEvaluationFunction(currentGameState):
-#     """
-#     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
-#     evaluation function (question 5).
-
-#     DESCRIPTION: <write something here so we know what you did>
-#     """
-#     "*** YOUR CODE HERE ***"    
-#     pacmanPos = currentGameState.getPacmanPosition()
-#     ghostPos = currentGameState.getGhostPositions()
-#     ghostStates = currentGameState.getGhostStates()
-#     numCaps = len(currentGameState.getCapsules())
-#     scaredTimes = [ghostState.scaredTimer for state in ghostStates]
-#     foodList = currentGameState.getFood().asList()
-#     numFood = currentGameState.getNumFood()
-#     badGhost = []
-#     goodGhost = []
-#     totalScore = 0
-#     win = float("inf")
-#     lose = -float("inf")
-#     tmpScore = 0
-#     foodScore = 0
-#     if currentGameState.isWin():
-#         return win
-#     elif currentGameState.isLose():
-#         return lose
-        
-#     score = currentGameState.getScore()
-#     for food in foodList:
-#         foodScore += 1/(manhattanDistance(pacmanPos, food)) * numFood
-        
-#     for i in range(len(scaredTimes)):
-#         if scaredTimes[i] == 0:
-#             badGhost.append(ghostPositions[i])
-#         else:
-#             goodGhost.append(ghostPositions[index])
-    
-#     goodGhostCount = 0
-#     for i in range(len(goodGhost)):
-#         goodGhostCount += 1/(((manhattanDistance(pacmanPosition, goodGhost[i])) * scaredTimes[i])+1)
-    
-#     deadGhostCount = 0
-#     for i in range(len(badGhost)):
-#         deadGhostCount += 1/manhattanDistance(pacmanPosition, badGhost[i])
-#     total = win + lose + score + capsules + foodScore + goodGhostCount + deadGhostCount
-#     return total   
-
-# # Abbreviation
-# better = betterEvaluationFunction
